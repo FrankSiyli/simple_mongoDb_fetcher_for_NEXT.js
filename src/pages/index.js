@@ -1,14 +1,24 @@
+import { MongoClient } from "mongodb";
+import { ObjectId } from "mongodb";
+
 export async function getServerSideProps() {
-  let res = await fetch("http://localhost:3000/api/sessions", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+  const client = await MongoClient.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
   });
-  let sessions = await res.json();
+  const db = client.db();
+
+  const sessions = await db.collection("sessions").find().toArray();
+
+  client.close();
+
+  const serializedSessions = sessions.map((session) => {
+    session._id = session._id.toString();
+    return session;
+  });
 
   return {
-    props: { sessions },
+    props: { sessions: serializedSessions },
   };
 }
 
